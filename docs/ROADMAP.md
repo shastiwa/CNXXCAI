@@ -37,7 +37,10 @@
 - [x] Mobile-friendly survey page, thank-you page, configurable expiry
 - [ ] Verify detail field names against real Helix
 - [ ] Virus scanning for attachments
-- [ ] Phase 1b: dashboard KPIs, filters, group and service analytics, Excel export
+- [x] Phase 1b (v0.6.0): dashboard KPIs, trends, filters, group, agent, service and category analytics, heatmap, Excel export
+- [ ] PDF export, scheduled reports (Phase 3)
+- [ ] Check heatmap colours, dark mode and desktop Excel with a larger data set
+- [ ] Response rate counts only surveys that exist; people who never clicked a Helix link are not counted (needs Helix to report links sent)
 
 ## Roles (v0.4.0)
 - [x] Service Delivery Manager and Support Agent roles, central role rules, fail-closed scoping

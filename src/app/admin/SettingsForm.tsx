@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 interface Settings {
   expiryDays: number; maxFileMb: number; maxFiles: number; allowedExtensions: string[]; showRequestSummary: boolean;
-  remindersEnabled: boolean; reminderAfterDays: number; maxReminders: number; maxReopens: number;
+  remindersEnabled: boolean; reminderAfterDays: number; maxReminders: number; maxReopens: number; minResponses: number;
 }
 const ALL_TYPES = ["png", "jpg", "jpeg", "pdf", "txt", "docx", "xlsx"];
 
@@ -31,7 +31,7 @@ export default function SettingsForm({ initial, reasons }: { initial: Settings; 
     else setMsg((await res.json().catch(() => ({}))).error ?? "Could not save.");
   }
 
-  const num = (k: "expiryDays" | "maxFileMb" | "maxFiles" | "reminderAfterDays" | "maxReminders" | "maxReopens") => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const num = (k: "expiryDays" | "maxFileMb" | "maxFiles" | "reminderAfterDays" | "maxReminders" | "maxReopens" | "minResponses") => (e: React.ChangeEvent<HTMLInputElement>) =>
     setS({ ...s, [k]: Number(e.target.value) });
 
   return (
@@ -71,6 +71,8 @@ export default function SettingsForm({ initial, reasons }: { initial: Settings; 
       <p className="muted">Reminders are only sent when a delivery method is configured on the server (REMINDER_MODE). None exists yet, so the job only reports what is due.</p>
       <label htmlFor="mo">Times an answered survey may be reopened</label>
       <input id="mo" type="number" min={0} max={5} value={s.maxReopens} onChange={num("maxReopens")} />
+      <label htmlFor="mn">Minimum answers before a score is shown (groups, agents, services, heatmap)</label>
+      <input id="mn" type="number" min={1} max={100} value={s.minResponses} onChange={num("minResponses")} />
       <label htmlFor="reasons">Dissatisfaction reasons (one per line)</label>
       <textarea id="reasons" rows={8} value={reasonText} onChange={(e) => setReasonText(e.target.value)} />
       <p className="muted">Reasons you remove are turned off, not deleted, so old responses keep their wording.</p>

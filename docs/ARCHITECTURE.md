@@ -199,6 +199,23 @@ flowchart LR
 
 `SurveyStatusEvent` (inviteId, fromStatus, toStatus, note, actorId, createdAt) is deleted with its survey. `SurveyInvite` gains sentAt, viewedAt, reminderCount, lastReminderAt, replacedById, reopenedFromId. Staff names in history are shown only to System Administrator and Experience Team.
 
+## 4c. Dashboard analytics (v0.6.0, ADR-020)
+
+```mermaid
+flowchart LR
+  Page["/dashboard"] --> A[getAnalytics]
+  Api["GET /api/dashboard/analytics"] --> A
+  Xl["GET /api/dashboard/export"] --> W[buildWorkbook]
+  A --> L[loadRows]
+  W --> L
+  L --> S["scope (role) + latest survey per incident + filters"]
+  S --> DB[(SurveyInvite + SurveyResponse)]
+  A --> C["KPIs, trend, breakdowns, heatmap<br/>minimum answers rule"]
+  W --> X["xlsx: no email, no comments,<br/>formula-safe cells, audit log"]
+```
+
+No new tables. Scope always comes first, so a filter can only narrow what the role already sees. The export is limited to `ROLES_EXPORT`.
+
 ## 5. Security model
 
 - **Sessions**: httpOnly JWT cookie (`jose`, HS256), TTL = `SESSION_TTL_HOURS`.

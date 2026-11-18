@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0 (Phase 1b: dashboard analytics and Excel export)
+- Added: new Dashboard with KPI cards (surveys, responses, response rate, satisfied %, unsatisfied %, still open, expired, cancelled, average hours to answer, cases not yet in BWF, minutes lost), trend charts (day, week, month, quarter, year), breakdowns by support group, service, category and agent, and a support group by service heatmap.
+- Added: filters (survey date range, group, service, category, priority, agent). Filters narrow the viewer's own data; they can never widen it. Bad filters give 400 (API) or a notice (page). `GET /api/dashboard/analytics`.
+- Added: Excel download of the current view (`GET /api/dashboard/export`): 8 sheets, no requester email and no comments, audit logged. System Administrator, Experience Team, Service Delivery Manager, Support Group Manager and Read-only Management only; Support Agents see numbers on screen only (ADR-020).
+- Added: admin setting "minimum answers before a score is shown" (default 5). Below it a group, agent, service, category or heatmap cell shows the count but no percentage, so a few answers cannot rank a person or team.
+- Changed: an incident counts once on the dashboard, by its latest survey. "Surveys" replaces "Invites sent" (see limits). The old `/api/dashboard/metrics` is unchanged.
+- Fixed while testing: an impossible date such as 2026-13-40 caused a 500 instead of 400; Excel header cells built from Helix service names were not protected against formulas.
+- Added dependency: `exceljs`.
+- Tests: 144 total (19 new incl. route rows). Mutation-checked: scope, replaced surveys, minimum threshold, date range, unknown values, expired-by-date, formula protection (cells and headers), week start, export roles, heatmap minimum, agent list, date validation, empty average. All caught.
+- Checked in the running app on real dev data: page, API, bad filter (400), Excel download (8 sheets, no email), signed-out export (401), charts and tables on screen.
+- Not verified: coloured heatmap cells in a browser (dev data has no cell with 5+ answers; the colouring is not unit tested), Excel opened in desktop Excel, dark mode, very large data (reads at most 20,000 surveys and says so).
+- Not built: PDF export, scheduled reports, notifications (later phases).
+- Limits to read before trusting the numbers: in the Helix-sent link flow a survey is only created when the requester first clicks, so "Surveys" and "Response rate" leave out people who never clicked. Average time to answer runs from survey creation (or send time), not from the Helix resolution time. Service, category, priority and agent are only as good as the Helix detail field names (`HELIX_DETAIL_FIELDS`); on the dev tenant Service came back empty, so everything shows as "(unknown)".
+
 ## 0.5.0 (Phase 2a: lifecycle and reminders)
 - Added: survey statuses PENDING, SENT, VIEWED, RESPONDED, EXPIRED, CANCELLED with a history row for every change (`SurveyStatusEvent`). Moves are checked against one rule table and cannot be won twice by two requests at once (ADR-017). SENT means "handed to Helix" (webhook flow). VIEWED is the first open of the survey page.
 - Added: Cancel and Reopen on a new **Surveys** page (System Administrator and Experience Team), each needing a reason and audit logged. Reopening an answered survey makes a new survey and keeps the old answer; the incident's Helix link then opens the new one. Reopening an expired or cancelled survey reuses it with a new expiry. Admin setting limits reopens per incident (default 1) (ADR-018).

@@ -17,6 +17,8 @@ export const settingsSchema = z.object({
   maxReminders: z.number().int().min(0).max(5),
   /** How many times one incident's survey may be reopened after it was answered. */
   maxReopens: z.number().int().min(0).max(5),
+  /** A group, agent, service or cell with fewer answers than this shows no satisfaction score. */
+  minResponses: z.number().int().min(1).max(100),
 });
 export type AppSettings = z.infer<typeof settingsSchema>;
 
@@ -33,6 +35,7 @@ function defaults(): AppSettings {
     reminderAfterDays: 3,
     maxReminders: 2,
     maxReopens: 1,
+    minResponses: 5,
   };
 }
 

@@ -48,6 +48,12 @@ Live Helix (`HELIX_MODE=live`) needs these names in `.env` (values never in the 
 - `REMINDER_MODE`: `off` (default) sends nothing. Reminders also need to be turned on in Admin settings. No live delivery exists yet, so even then the job only reports how many are due.
 - Surveys: `/surveys` shows status and history. Admin and Experience Team can cancel or reopen (reason required).
 
+## Dashboard and export (v0.6.0)
+- After pulling: `npm install` (adds `exceljs`). No database change.
+- Admin setting "minimum answers before a score is shown" (default 5) controls when scores appear.
+- Excel download audit logs `dashboard.export` with the filters used (no data). The file holds counts, incident numbers, groups, services, categories, agent names and answers; no requester email, no comments. Treat the file as internal data once downloaded.
+- Service, category, priority and agent come from Helix detail fields. If they show "(unknown)", set `HELIX_DETAIL_FIELDS` to the right field names.
+
 ## Helix webhook (sandbox, older flow)
 `POST /api/webhooks/helix` with header `X-Helix-Signature` and JSON `{ "incidentId", "supportGroup", "requesterEmail" }`. Returns the survey links.
 

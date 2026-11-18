@@ -20,6 +20,8 @@ export const ROLES_VIEW_DATA: Role[] = ALL_ROLES;
 export const ROLES_WORK_CASES: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
 /** Cancel, reopen and see who did it in the survey history. Everyone else sees status only. */
 export const ROLES_MANAGE_SURVEYS: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
+/** Excel export takes data out of the system, so individual agents see their numbers on screen only. */
+export const ROLES_EXPORT: Role[] = ["ADMIN", "EXPERIENCE_TEAM", "SERVICE_DELIVERY_MANAGER", "SUPPORT_GROUP", "CIO"];
 /** Requester email is personal data. */
 export const ROLES_SEE_REQUESTER_EMAIL: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
 /** Screenshots and documents can hold personal data: management and individual agents get none. */
