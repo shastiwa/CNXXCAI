@@ -18,6 +18,8 @@ export const ALL_ROLES = Object.keys(ROLE_LABELS) as Role[];
 export const ROLES_VIEW_DATA: Role[] = ALL_ROLES;
 /** Cases queue and retry (ADR-005: one central team owns cases). */
 export const ROLES_WORK_CASES: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
+/** Cancel, reopen and see who did it in the survey history. Everyone else sees status only. */
+export const ROLES_MANAGE_SURVEYS: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
 /** Requester email is personal data. */
 export const ROLES_SEE_REQUESTER_EMAIL: Role[] = ["ADMIN", "EXPERIENCE_TEAM"];
 /** Screenshots and documents can hold personal data: management and individual agents get none. */

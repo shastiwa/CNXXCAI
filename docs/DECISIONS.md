@@ -57,5 +57,14 @@ Your suggested roles map onto the enum like this: System Administrator = `ADMIN`
 Why SDM has no cases: ADR-005 keeps cases with the central team; follow-up access for managers is decided with the Phase 2 Follow-up module. Why agents get no files: screenshots can hold personal data. Both are one-line changes in `src/lib/roles.ts`.
 `buildScopeFilters` now fails closed: only roles explicitly marked "all" see everything. Agents are matched by exact Helix agent text (`User.agentName`); a wrong spelling shows nothing rather than too much.
 
+## ADR-017: Survey statuses move through one checked function
+Statuses: PENDING, SENT, VIEWED, RESPONDED, EXPIRED, CANCELLED. `moveStatus` (`src/services/lifecycle.ts`) is the only place that changes status. It checks a rule table, updates only if the status is still what it read, and writes the history row. Why: a cancel and an answer at the same moment cannot both win, and the answer is saved in the same transaction as its status move, so a survey cancelled after the page loaded refuses the answer. RESPONDED is final. EXPIRED and CANCELLED leave only through reopen. SENT is set only when the webhook hands the link to Helix; the app cannot know when an email was actually delivered. Trade-off: the status column has no database constraint on SQLite, so the rule table is the guard.
+
+## ADR-018: Reopening keeps the old answer
+`SurveyResponse.inviteId` is unique, and loosening it would need `--accept-data-loss`, so an answered survey is reopened by creating a new survey (`reopenedFromId`) and marking the old one `replacedById`. The old response is never edited or deleted. The incident's Helix link is moved to the new survey, so the requester uses the same email link. Dashboard counts use the latest survey per incident. Reopening needs a reason, is audit logged, is limited by the `maxReopens` setting, and is for System Administrator and Experience Team only. Expired and cancelled surveys have no answer, so they are reopened in place.
+
+## ADR-019: Reminders are built, delivery is not
+The job decides who is due (open, SENT or VIEWED, not expired, under the maximum, enough days since the last reminder) and claims each survey before sending so two job runs cannot double-send. The sending itself is behind `ReminderSender`. With `REMINDER_MODE=off` (default) nothing is sent or counted and the job result says so; there is no live sender because no email or Helix notification method is available. This avoids faking a successful external call. A failed send gives the slot back and is retried at the next run.
+
 ## ADR-008: Test DB is a deleted-and-recreated file
 `prisma db push --force-reset` is refused when run by an AI agent and is destructive. Tests delete `prisma/test.db` and run a plain `db push` instead.

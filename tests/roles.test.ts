@@ -16,6 +16,10 @@ import { GET as metricsGet } from "@/app/api/dashboard/metrics/route";
 import { GET as responsesGet } from "@/app/api/responses/route";
 import { GET as settingsGet } from "@/app/api/admin/settings/route";
 import { PUT as userPut } from "@/app/api/admin/users/[id]/route";
+import { POST as jobsPost } from "@/app/api/jobs/run/route";
+import { GET as surveysGet } from "@/app/api/surveys/route";
+import { POST as cancelPost } from "@/app/api/surveys/[id]/cancel/route";
+import { POST as reopenPost } from "@/app/api/surveys/[id]/reopen/route";
 import { signSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ALL_ROLES, SCOPE_BY_ROLE } from "@/lib/roles";
@@ -79,6 +83,10 @@ describe("every role against every route", () => {
     ["POST /api/cases/x/retry", () => retryPost(req(), ctx("nope")), { ADMIN: 404, EXPERIENCE_TEAM: 404, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
     ["GET /api/admin/settings", () => settingsGet(), { ADMIN: 200, EXPERIENCE_TEAM: 403, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
     ["PUT /api/admin/users/x", () => userPut(req("http://localhost/x", { method: "PUT", body: "{}" }), ctx("nope")), { ADMIN: 400, EXPERIENCE_TEAM: 403, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
+    ["GET /api/surveys", () => surveysGet(req()), { ADMIN: 200, EXPERIENCE_TEAM: 200, SERVICE_DELIVERY_MANAGER: 200, SUPPORT_GROUP: 200, SUPPORT_AGENT: 200, CIO: 200 }],
+    ["POST /api/surveys/x/cancel", () => cancelPost(req("http://localhost/x", { method: "POST", body: JSON.stringify({ reason: "test reason" }) }), ctx("nope")), { ADMIN: 404, EXPERIENCE_TEAM: 404, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
+    ["POST /api/surveys/x/reopen", () => reopenPost(req("http://localhost/x", { method: "POST", body: JSON.stringify({ reason: "test reason" }) }), ctx("nope")), { ADMIN: 404, EXPERIENCE_TEAM: 404, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
+    ["POST /api/jobs/run (signed in, no secret)", () => jobsPost(req("http://localhost/x", { method: "POST" })), { ADMIN: 200, EXPERIENCE_TEAM: 403, SERVICE_DELIVERY_MANAGER: 403, SUPPORT_GROUP: 403, SUPPORT_AGENT: 403, CIO: 403 }],
     ["GET /api/attachments/<file of group Network>", () => attachmentGet(req(), ctx(attachmentId)), { ADMIN: 200, EXPERIENCE_TEAM: 200, SERVICE_DELIVERY_MANAGER: 200, SUPPORT_GROUP: 200, SUPPORT_AGENT: 403, CIO: 403 }],
   ];
 

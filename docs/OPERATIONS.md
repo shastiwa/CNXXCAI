@@ -41,6 +41,13 @@ Live Helix (`HELIX_MODE=live`) needs these names in `.env` (values never in the 
 - New users and password resets are not built yet: add users through `prisma/seed.ts` for now. The seed resets the password of every seeded user and rewrites `.seed-credentials.txt`.
 - Demo logins (sandbox only): `sdm@example.test`, `agent@example.test`; passwords are in `.seed-credentials.txt`.
 
+## Lifecycle job and reminders (v0.5.0)
+- After pulling: stop the dev server, then `npx prisma generate` and `npx prisma db push` (adds columns and one table only).
+- Job: `POST /api/jobs/run` expires overdue surveys and sends reminders. Safe to run often (for example hourly). Admin page has a "Run now" button.
+- Scheduler (for example Windows Task Scheduler): set `JOBS_SECRET` (16+ characters, name only here) in `.env`, then call the endpoint with header `X-Jobs-Secret`. Without `JOBS_SECRET` only a signed-in admin can run it.
+- `REMINDER_MODE`: `off` (default) sends nothing. Reminders also need to be turned on in Admin settings. No live delivery exists yet, so even then the job only reports how many are due.
+- Surveys: `/surveys` shows status and history. Admin and Experience Team can cancel or reopen (reason required).
+
 ## Helix webhook (sandbox, older flow)
 `POST /api/webhooks/helix` with header `X-Helix-Signature` and JSON `{ "incidentId", "supportGroup", "requesterEmail" }`. Returns the survey links.
 

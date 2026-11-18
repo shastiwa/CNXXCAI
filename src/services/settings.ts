@@ -12,6 +12,11 @@ export const settingsSchema = z.object({
   maxFiles: z.number().int().min(0).max(10),
   allowedExtensions: z.array(z.enum(SUPPORTED_FILE_TYPES)).max(SUPPORTED_FILE_TYPES.length),
   showRequestSummary: z.boolean(),
+  remindersEnabled: z.boolean(),
+  reminderAfterDays: z.number().int().min(1).max(30),
+  maxReminders: z.number().int().min(0).max(5),
+  /** How many times one incident's survey may be reopened after it was answered. */
+  maxReopens: z.number().int().min(0).max(5),
 });
 export type AppSettings = z.infer<typeof settingsSchema>;
 
@@ -24,6 +29,10 @@ function defaults(): AppSettings {
     maxFiles: 3,
     allowedExtensions: ["png", "jpg", "jpeg", "pdf", "txt", "docx"],
     showRequestSummary: true,
+    remindersEnabled: false,
+    reminderAfterDays: 3,
+    maxReminders: 2,
+    maxReopens: 1,
   };
 }
 

@@ -10,6 +10,7 @@ import type { HelixConnector, HelixIncident, HelixIncidentDetails } from "@/conn
 import { getSettings } from "./settings";
 import { getActiveReasons } from "./reasons";
 import { removeFiles, validateFiles, writeFiles, type UploadedFile } from "./attachments";
+import { expireInvite, markSent, markViewed, moveStatus, recordCreated } from "./lifecycle";
 
 export const EXPERIENCE_TEAM = "Experience Management Team";
 
@@ -45,10 +46,14 @@ export const submitInput = z.object({
   comments: z.string().max(2000).optional(),
 });
 
-export async function createInvite(input: z.infer<typeof inviteInput>) {
+/** `handedToHelix`: the links are returned to Helix, which sends them, so the survey counts as SENT. */
+export async function createInvite(input: z.infer<typeof inviteInput>, opts: { handedToHelix?: boolean } = {}) {
   const token = randomBytes(24).toString("base64url");
   const expiresAt = new Date(Date.now() + (await getSettings()).expiryDays * 86400_000);
-  const invite = await db.surveyInvite.create({ data: { ...input, token, expiresAt } });
+  const invite = await db.surveyInvite.create({
+    data: { ...input, token, expiresAt, events: { create: { toStatus: "PENDING", note: "Survey created" } } },
+  });
+  if (opts.handedToHelix) await markSent(invite.id, "Link handed to Helix to send");
   const base = `${env().APP_BASE_URL}/survey/${invite.token}`;
   return {
     token: invite.token,
@@ -112,6 +117,7 @@ export async function openSurveyForIncident(raw: unknown, connector: HelixConnec
         },
       });
       await tx.incidentLink.create({ data: { incidentId: incident, inviteId: invite.id } });
+      await recordCreated(tx, invite.id, "PENDING", "Created when the Helix link was opened");
     });
     return { token };
   } catch (e) {
@@ -136,10 +142,9 @@ export async function loadOpenInvite(token: string) {
   const invite = await db.surveyInvite.findUnique({ where: { token } });
   if (!invite) throw new HttpError(404, "Survey not found");
   if (invite.status === "RESPONDED") throw new HttpError(409, "Survey already completed");
+  if (invite.status === "CANCELLED") throw new HttpError(410, "This survey is no longer available");
   if (invite.status === "EXPIRED" || invite.expiresAt.getTime() < Date.now()) {
-    if (invite.status !== "EXPIRED") {
-      await db.surveyInvite.update({ where: { id: invite.id }, data: { status: "EXPIRED" } });
-    }
+    if (invite.status !== "EXPIRED") await expireInvite(invite.id);
     throw new HttpError(410, "Survey link has expired");
   }
   return invite;
@@ -151,6 +156,7 @@ export async function loadOpenInvite(token: string) {
  */
 export async function getSurveyContext(token: string) {
   const invite = await loadOpenInvite(token);
+  await markViewed(invite.id); // first open only: later opens find it already VIEWED and change nothing
   const [settings, reasons] = await Promise.all([getSettings(), getActiveReasons()]);
   return {
     incidentId: invite.incidentId,
@@ -201,7 +207,10 @@ export async function submitResponse(raw: unknown, files: UploadedFile[] = []) {
           attachments: { create: stored },
         },
       });
-      await tx.surveyInvite.update({ where: { id: invite.id }, data: { status: "RESPONDED" } });
+      // Fails (and rolls everything back) if the survey was cancelled or expired after we loaded it.
+      if (!(await moveStatus(tx, invite.id, "RESPONDED", { note: "Response submitted" }))) {
+        throw new HttpError(409, "This survey is no longer available.");
+      }
       let caseId: string | null = null;
       if (input.satisfaction === "UNSATISFIED") {
         const rc = await tx.recoveryCase.create({

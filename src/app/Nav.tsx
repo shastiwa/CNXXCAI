@@ -18,6 +18,7 @@ export default function Nav({ email, role }: { email: string; role: Role }) {
       <strong>SolvNow XC AI</strong>
       <Link href="/dashboard">Dashboard</Link>
       <Link href="/responses">Responses</Link>
+      <Link href="/surveys">Surveys</Link>
       {canCases && <Link href="/cases">Cases</Link>}
       {ROLES_ADMIN.includes(role) && <Link href="/admin">Admin</Link>}
       <span className="spacer" />

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { getActiveReasons } from "@/services/reasons";
 import { getSettings } from "@/services/settings";
 import Nav from "../Nav";
+import JobsPanel from "./JobsPanel";
 import SettingsForm from "./SettingsForm";
 import UsersTable from "./UsersTable";
 
@@ -27,6 +28,8 @@ export default async function Admin() {
         <h1>Admin</h1>
         <h2>Survey settings</h2>
         <SettingsForm initial={settings} reasons={reasons} />
+        <h2>Scheduled jobs</h2>
+        <JobsPanel />
         <h2>Users</h2>
         <UsersTable users={users} selfId={user.id} />
         <h2>Recent audit log</h2>

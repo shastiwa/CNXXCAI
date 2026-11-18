@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 (Phase 2a: lifecycle and reminders)
+- Added: survey statuses PENDING, SENT, VIEWED, RESPONDED, EXPIRED, CANCELLED with a history row for every change (`SurveyStatusEvent`). Moves are checked against one rule table and cannot be won twice by two requests at once (ADR-017). SENT means "handed to Helix" (webhook flow). VIEWED is the first open of the survey page.
+- Added: Cancel and Reopen on a new **Surveys** page (System Administrator and Experience Team), each needing a reason and audit logged. Reopening an answered survey makes a new survey and keeps the old answer; the incident's Helix link then opens the new one. Reopening an expired or cancelled survey reuses it with a new expiry. Admin setting limits reopens per incident (default 1) (ADR-018).
+- Added: lifecycle job (`POST /api/jobs/run`, also a "Run now" button on Admin): expires overdue surveys and sends reminders. Runs safely at any frequency. Scheduler access uses the optional `JOBS_SECRET` header; a wrong secret is refused and never falls back to login.
+- Added: reminders with admin settings (on or off, days between, maximum). **No delivery method exists yet** (`REMINDER_MODE=off`): the job only reports how many are due and counts nothing. `mock` mode is for tests. Real delivery needs an email or Helix notification method.
+- Changed: the dashboard counts an incident once, by its latest survey (a reopened survey replaces the old one in the numbers; old answers stay in Responses).
+- Changed (additive DB only): `SurveyInvite` gets 6 columns; new table `SurveyStatusEvent`. Old surveys have no history rows before this version.
+- Tests: 125 total (22 new, plus 4 route rows in the role matrix). Mutation-checked: transition rules, cancelled-survey block, reminder maximum, reopen limit, dashboard double count, failed-send accounting, staff-name hiding, the save-time status check (needed a new race test first), Helix link move, reminder eligibility, job secret.
+- Checked in the running app (mock mode): open, view, cancel (short reason 400), reopen, answer, reopen again (second refused 409), job as admin (200), as Experience Team (403), wrong secret (401), Surveys page signed out redirects.
+- Not verified: the Surveys page and its buttons in a browser (HTML and API only), a real scheduler calling the job.
+- Limits: email scanners that open links can mark a survey VIEWED. In the Helix-sent link flow a survey only exists after the first click, so reminders reach only people who opened the survey and did not answer, plus surveys made by the webhook.
+
 ## 0.4.0 (roles)
 - Added: two roles, **Service Delivery Manager** and **Support Agent**. The other four keep their enum names and get display names: Admin = System Administrator, Support Group = Support Group Manager, CIO = Read-only Management (ADR-016). Experience Team is unchanged.
 - Added: `User.agentName` (one optional column). A Support Agent sees only surveys whose Helix assigned agent equals this text exactly.

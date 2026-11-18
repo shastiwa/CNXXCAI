@@ -163,6 +163,42 @@ Submit flow with files: validate (reason, count, size, type, content) → write 
 
 Cardinality is enforced at the DB level: one response per invite, one case per response (unique FKs). `AppSetting` (standalone admin key/value config) is omitted from the diagram as it has no relations.
 
+## 4b. Survey lifecycle (v0.5.0, ADR-017 to ADR-019)
+
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: survey created
+  PENDING --> SENT: link handed to Helix
+  PENDING --> VIEWED: page opened
+  SENT --> VIEWED: page opened
+  PENDING --> RESPONDED
+  SENT --> RESPONDED
+  VIEWED --> RESPONDED: answer saved
+  PENDING --> EXPIRED
+  SENT --> EXPIRED
+  VIEWED --> EXPIRED: past expiry (job or page open)
+  PENDING --> CANCELLED
+  SENT --> CANCELLED
+  VIEWED --> CANCELLED: staff, with reason
+  EXPIRED --> PENDING: reopen in place
+  CANCELLED --> PENDING: reopen in place
+  RESPONDED --> [*]: final
+```
+
+An answered survey is never changed. "Reopen" on it creates a new survey linked by `reopenedFromId`; the old one gets `replacedById`, and the incident's Helix link points to the new one.
+
+```mermaid
+flowchart LR
+  Job["POST /api/jobs/run<br/>admin or X-Jobs-Secret"] --> Exp[expire overdue surveys]
+  Job --> Rem{reminders on<br/>and sender set?}
+  Rem -- no --> Report[report how many are due]
+  Rem -- yes --> Send[claim, send, record]
+  Exp --> Hist[(SurveyStatusEvent)]
+  Send --> Hist
+```
+
+`SurveyStatusEvent` (inviteId, fromStatus, toStatus, note, actorId, createdAt) is deleted with its survey. `SurveyInvite` gains sentAt, viewedAt, reminderCount, lastReminderAt, replacedById, reopenedFromId. Staff names in history are shown only to System Administrator and Experience Team.
+
 ## 5. Security model
 
 - **Sessions**: httpOnly JWT cookie (`jose`, HS256), TTL = `SESSION_TTL_HOURS`.

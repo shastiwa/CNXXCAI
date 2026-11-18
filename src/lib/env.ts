@@ -21,6 +21,11 @@ const schema = z.object({
   HELIX_DETAIL_FIELDS: z.string().optional(),
   // Where survey attachments are stored (outside the web root). Never serve this folder directly.
   UPLOAD_DIR: z.string().min(1).default("uploads"),
+  // How reminders are delivered. "off" sends nothing (the job only reports what is due). "mock" is for tests.
+  // No live delivery exists yet: it needs an email or Helix notification method.
+  REMINDER_MODE: z.enum(["off", "mock"]).default("off"),
+  // Lets a scheduler call POST /api/jobs/run without a login. Optional; without it only an admin can run jobs.
+  JOBS_SECRET: z.string().min(16).optional(),
 });
 
 let cached: z.infer<typeof schema> | undefined;

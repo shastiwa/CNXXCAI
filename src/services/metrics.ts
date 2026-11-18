@@ -31,14 +31,17 @@ export function buildScopeFilters(user: Viewer) {
 
 export async function getDashboardMetrics(user: Viewer) {
   const f = buildScopeFilters(user);
+  // A reopened survey replaces the old one: count the incident once, by its latest survey.
+  const latest = { replacedById: null };
+  const latestResponse = { invite: latest };
   const [invites, satisfied, unsatisfied, created, failed, pending, loss] = await Promise.all([
-    db.surveyInvite.count({ where: f.invite }),
-    db.surveyResponse.count({ where: { ...f.response, satisfaction: "SATISFIED" } }),
-    db.surveyResponse.count({ where: { ...f.response, satisfaction: "UNSATISFIED" } }),
+    db.surveyInvite.count({ where: { AND: [f.invite, latest] } }),
+    db.surveyResponse.count({ where: { AND: [f.response, latestResponse], satisfaction: "SATISFIED" } }),
+    db.surveyResponse.count({ where: { AND: [f.response, latestResponse], satisfaction: "UNSATISFIED" } }),
     db.recoveryCase.count({ where: { ...f.recoveryCase, status: "CREATED" } }),
     db.recoveryCase.count({ where: { ...f.recoveryCase, status: "FAILED" } }),
     db.recoveryCase.count({ where: { ...f.recoveryCase, status: "PENDING" } }),
-    db.surveyResponse.aggregate({ where: f.response, _sum: { productivityLossMin: true } }),
+    db.surveyResponse.aggregate({ where: { AND: [f.response, latestResponse] }, _sum: { productivityLossMin: true } }),
   ]);
   const responses = satisfied + unsatisfied;
   return {

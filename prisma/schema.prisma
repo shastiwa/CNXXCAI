@@ -7,10 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// PENDING: created, link not handed out yet. SENT: link handed to Helix (webhook flow). VIEWED: survey page opened.
 enum InviteStatus {
   PENDING
+  SENT
+  VIEWED
   RESPONDED
   EXPIRED
+  CANCELLED
 }
 enum Satisfaction {
   SATISFIED
@@ -55,6 +59,29 @@ model SurveyInvite {
   priority       String?
   assignedAgent  String?
   resolvedAt     DateTime?
+  // Lifecycle (v0.5.0, all optional or defaulted, additive).
+  sentAt         DateTime?
+  viewedAt       DateTime?
+  reminderCount  Int           @default(0)
+  lastReminderAt DateTime?
+  // Resubmission: the old survey keeps its response and points at its replacement. Plain ids, no foreign key.
+  replacedById   String?
+  reopenedFromId String?
+  events         SurveyStatusEvent[]
+}
+
+// One row per status change, reminder or reopen. Deleted with its survey.
+model SurveyStatusEvent {
+  id         String       @id @default(cuid())
+  inviteId   String
+  invite     SurveyInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  fromStatus String?
+  toStatus   String
+  note       String?
+  actorId    String?
+  createdAt  DateTime     @default(now())
+
+  @@index([inviteId, createdAt])
 }
 
 model SurveyResponse {

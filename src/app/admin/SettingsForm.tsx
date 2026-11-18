@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 interface Settings {
   expiryDays: number; maxFileMb: number; maxFiles: number; allowedExtensions: string[]; showRequestSummary: boolean;
+  remindersEnabled: boolean; reminderAfterDays: number; maxReminders: number; maxReopens: number;
 }
 const ALL_TYPES = ["png", "jpg", "jpeg", "pdf", "txt", "docx", "xlsx"];
 
@@ -30,7 +31,7 @@ export default function SettingsForm({ initial, reasons }: { initial: Settings; 
     else setMsg((await res.json().catch(() => ({}))).error ?? "Could not save.");
   }
 
-  const num = (k: "expiryDays" | "maxFileMb" | "maxFiles") => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const num = (k: "expiryDays" | "maxFileMb" | "maxFiles" | "reminderAfterDays" | "maxReminders" | "maxReopens") => (e: React.ChangeEvent<HTMLInputElement>) =>
     setS({ ...s, [k]: Number(e.target.value) });
 
   return (
@@ -58,6 +59,18 @@ export default function SettingsForm({ initial, reasons }: { initial: Settings; 
           onChange={(e) => setS({ ...s, showRequestSummary: e.target.checked })} />
         Show the request summary on the survey page
       </label>
+      <label style={{ fontWeight: 400, display: "flex", gap: 8, alignItems: "center" }}>
+        <input type="checkbox" style={{ width: "auto" }} checked={s.remindersEnabled}
+          onChange={(e) => setS({ ...s, remindersEnabled: e.target.checked })} />
+        Send reminders for surveys that are not answered
+      </label>
+      <label htmlFor="rd">Days to wait before each reminder</label>
+      <input id="rd" type="number" min={1} max={30} value={s.reminderAfterDays} onChange={num("reminderAfterDays")} />
+      <label htmlFor="mr">Maximum reminders per survey</label>
+      <input id="mr" type="number" min={0} max={5} value={s.maxReminders} onChange={num("maxReminders")} />
+      <p className="muted">Reminders are only sent when a delivery method is configured on the server (REMINDER_MODE). None exists yet, so the job only reports what is due.</p>
+      <label htmlFor="mo">Times an answered survey may be reopened</label>
+      <input id="mo" type="number" min={0} max={5} value={s.maxReopens} onChange={num("maxReopens")} />
       <label htmlFor="reasons">Dissatisfaction reasons (one per line)</label>
       <textarea id="reasons" rows={8} value={reasonText} onChange={(e) => setReasonText(e.target.value)} />
       <p className="muted">Reasons you remove are turned off, not deleted, so old responses keep their wording.</p>

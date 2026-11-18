@@ -15,6 +15,8 @@ export default defineConfig({
       HELIX_MODE: "mock",
       BWF_MODE: "mock",
       UPLOAD_DIR: ".test-uploads",
+      REMINDER_MODE: "mock",
+      JOBS_SECRET: "test-jobs-secret-1234",
     },
   },
 });

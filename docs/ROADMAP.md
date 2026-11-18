@@ -45,6 +45,18 @@
 - [ ] Create users and reset passwords from the Admin page (needs a password-delivery decision)
 - [ ] Decide Service Delivery Manager access to follow-ups (with the Phase 2 Follow-up module)
 
+## Phase 2a: Lifecycle and reminders (v0.5.0)
+- [x] Statuses Pending, Sent, Viewed, Responded, Expired, Cancelled with history
+- [x] Cancel and controlled reopen (reason, audit, limit)
+- [x] Lifecycle job (expire, remind) with scheduler secret
+- [ ] Reminder delivery (needs an email or Helix notification method; `REMINDER_MODE` is off)
+- [ ] Browser check of the Surveys page and buttons
+- [ ] Call the job from a real scheduler
+
+## Phase 2b: Follow-ups (not started)
+- [ ] Follow-up module, routing, escalation rules
+- [ ] Sync responses back to Helix and create follow-up records (needs Helix write endpoints and field names)
+
 ## Phase 2: Operate
 - [ ] Deployment, monitoring, backups (see OPERATIONS.md)
 - [ ] Add a CIO-specific `/cio` view (architecture mentions it; today CIO uses the dashboard)
