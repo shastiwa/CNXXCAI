@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // switch to "postgresql" + DATABASE_URL for production
+  url      = env("DATABASE_URL")
+}
+
+enum InviteStatus {
+  PENDING
+  RESPONDED
+  EXPIRED
+}
+enum Satisfaction {
+  SATISFIED
+  UNSATISFIED
+}
+enum CallbackPreference {
+  NONE
+  EMAIL
+  PHONE
+}
+enum CaseStatus {
+  PENDING
+  CREATED
+  FAILED
+}
+enum Role {
+  ADMIN
+  EXPERIENCE_TEAM
+  SUPPORT_GROUP
+  CIO
+}
+
+model SurveyInvite {
+  id             String        @id @default(cuid())
+  token          String        @unique
+  incidentId     String
+  supportGroup   String
+  requesterEmail String
+  status         InviteStatus  @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime      @default(now())
+  response       SurveyResponse?
+}
+
+model SurveyResponse {
+  id                    String             @id @default(cuid())
+  inviteId              String             @unique
+  invite                SurveyInvite       @relation(fields: [inviteId], references: [id])
+  satisfaction          Satisfaction
+  productivityLossMin   Int?
+  dissatisfactionReason String?
+  callbackPreference    CallbackPreference @default(NONE)
+  comments              String?
+  createdAt             DateTime           @default(now())
+  recoveryCase          RecoveryCase?
+}
+
+model RecoveryCase {
+  id            String         @id @default(cuid())
+  responseId    String         @unique
+  response      SurveyResponse @relation(fields: [responseId], references: [id])
+  status        CaseStatus     @default(PENDING)
+  bwfCaseId     String?
+  bwfCaseNumber String?
+  assignedTeam  String
+  attempts      Int            @default(0)
+  lastError     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  role         Role
+  supportGroup String?
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  audits       AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  target    String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
+
+// One survey per incident for invites created from a Helix-sent link. The primary key makes it race-safe.
+model IncidentLink {
+  incidentId String   @id
+  inviteId   String   @unique
+  createdAt  DateTime @default(now())
+}
