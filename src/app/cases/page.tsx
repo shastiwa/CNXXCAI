@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { ROLES_WORK_CASES } from "@/lib/roles";
 import Nav from "../Nav";
 import RetryButton from "./RetryButton";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function Cases() {
   const user = await getSession();
   if (!user) redirect("/login?next=/cases");
-  if (user.role !== "ADMIN" && user.role !== "EXPERIENCE_TEAM") notFound();
+  if (!ROLES_WORK_CASES.includes(user.role)) notFound();
 
   // ADR-005: org-wide by design, not group-scoped.
   const cases = await db.recoveryCase.findMany({

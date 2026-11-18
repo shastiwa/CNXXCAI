@@ -34,6 +34,10 @@ beforeAll(async () => {
       return res.end(JSON.stringify({ entries: [{ values: {
         [F.incidentNumber]: "INC000123", [F.status]: "Resolved", [F.assignedGroup]: "Network",
         [F.requesterEmail]: "req@example.test",
+        // request details (default field names from DEFAULT_DETAIL_FIELDS)
+        Description: "Printer is offline", Service: "Printing", "Service Type": "User Service Restoration",
+        "Categorization Tier 1": "Hardware", Priority: "High", Assignee: "Alex Agent",
+        "Last Resolved Date": "2026-11-10T09:30:00.000+0000",
       } }] }));
     }
     res.end(JSON.stringify({ entries: [] }));
@@ -88,6 +92,31 @@ describe("live Helix connector (against a fake Helix)", () => {
     const down = await connector().getIncident("INC000123").catch((e) => e as Error);
     expect((down as Error).message).toBe("Helix returned 500");
     expect(`${(wrong as Error).message}${(down as Error).message}`).not.toContain("secret-detail");
+  });
+
+  it("reads request details in a separate read-only call that asks for the detail fields", async () => {
+    const d = await connector().getIncidentDetails!("INC000123");
+    expect(d).toMatchObject({
+      summary: "Printer is offline", serviceName: "Printing", requestType: "User Service Restoration",
+      category: "Hardware", priority: "High", assignedAgent: "Alex Agent",
+    });
+    expect(d?.resolvedAt?.toISOString()).toBe("2026-11-10T09:30:00.000Z");
+    const asked = decodeURIComponent(log[log.length - 1].url);
+    expect(log[log.length - 1].method).toBe("GET");
+    expect(asked).toContain("Description");
+    expect(asked).not.toContain("Internet E-mail"); // details call never asks for the requester email
+  });
+
+  it("renames detail fields from configuration", async () => {
+    const c = createLiveHelix({ baseUrl: base, username: USER, password: PASS, timeoutMs: 3000, detailFields: { summary: "Short Text" } });
+    await c.getIncidentDetails!("INC000123");
+    expect(decodeURIComponent(log[log.length - 1].url)).toContain("Short Text");
+  });
+
+  it("details never throw: Helix errors and unknown incidents give null", async () => {
+    expect(await connector().getIncidentDetails!("INC999999")).toBeNull();
+    mode = "500";
+    expect(await connector().getIncidentDetails!("INC000123")).toBeNull();
   });
 
   it("refuses to send credentials over plain http to a non-local host", () => {

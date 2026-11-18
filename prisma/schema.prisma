@@ -26,10 +26,14 @@ enum CaseStatus {
   CREATED
   FAILED
 }
+// Display names are in src/lib/roles.ts. ADMIN = System Administrator, SUPPORT_GROUP = Support Group Manager,
+// CIO = Read-only Management User.
 enum Role {
   ADMIN
   EXPERIENCE_TEAM
+  SERVICE_DELIVERY_MANAGER
   SUPPORT_GROUP
+  SUPPORT_AGENT
   CIO
 }
 
@@ -43,6 +47,14 @@ model SurveyInvite {
   expiresAt      DateTime
   createdAt      DateTime      @default(now())
   response       SurveyResponse?
+  // Request details copied from Helix when the survey is created (all optional, additive).
+  requestSummary String?
+  serviceName    String?
+  requestType    String?
+  category       String?
+  priority       String?
+  assignedAgent  String?
+  resolvedAt     DateTime?
 }
 
 model SurveyResponse {
@@ -56,6 +68,31 @@ model SurveyResponse {
   comments              String?
   createdAt             DateTime           @default(now())
   recoveryCase          RecoveryCase?
+  attachments           SurveyAttachment[]
+}
+
+// Files the requester attached to an UNSATISFIED response. The file lives on disk under UPLOAD_DIR;
+// storageKey is a random name we generate, never the user's file name.
+model SurveyAttachment {
+  id          String         @id @default(cuid())
+  responseId  String
+  response    SurveyResponse @relation(fields: [responseId], references: [id])
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  storageKey  String         @unique
+  sha256      String
+  createdAt   DateTime       @default(now())
+
+  @@index([responseId])
+}
+
+// Admin-editable list of dissatisfaction reasons shown on the survey.
+model SurveyReason {
+  id        String  @id @default(cuid())
+  label     String  @unique
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
 }
 
 model RecoveryCase {
@@ -78,6 +115,8 @@ model User {
   passwordHash String
   role         Role
   supportGroup String?
+  // SUPPORT_AGENT only: must equal the Helix "assigned agent" text exactly to see that agent's surveys.
+  agentName    String?
   active       Boolean    @default(true)
   createdAt    DateTime   @default(now())
   audits       AuditLog[]

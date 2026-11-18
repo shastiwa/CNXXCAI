@@ -26,6 +26,7 @@ export default async function Dashboard() {
       <main>
         <h1>Dashboard</h1>
         {user.role === "SUPPORT_GROUP" && <p className="muted">Showing group: {user.supportGroup ?? "none"}</p>}
+        {user.role === "SUPPORT_AGENT" && <p className="muted">Showing surveys for agent: {user.agentName ?? "none (ask an administrator to set your agent name)"}</p>}
         <div className="grid">
           {stats.map(([label, value]) => (
             <div className="card stat" key={label}>

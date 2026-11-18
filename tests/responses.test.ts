@@ -5,7 +5,7 @@ import { listResponses } from "@/services/responses";
 
 async function answer(incidentId: string, supportGroup: string, satisfaction: "SATISFIED" | "UNSATISFIED", comments: string) {
   const i = await createInvite({ incidentId, supportGroup, requesterEmail: `${incidentId.toLowerCase()}@example.test` });
-  await submitResponse({ token: i.token, satisfaction, comments, dissatisfactionReason: satisfaction === "UNSATISFIED" ? "Took too long" : undefined });
+  await submitResponse({ token: i.token, satisfaction, comments, dissatisfactionReason: satisfaction === "UNSATISFIED" ? "Resolution took too long" : undefined });
 }
 
 beforeEach(async () => {

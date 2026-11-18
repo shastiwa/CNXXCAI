@@ -14,6 +14,7 @@ export default defineConfig({
       APP_BASE_URL: "http://localhost:3000",
       HELIX_MODE: "mock",
       BWF_MODE: "mock",
+      UPLOAD_DIR: ".test-uploads",
     },
   },
 });

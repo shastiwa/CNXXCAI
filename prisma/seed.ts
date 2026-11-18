@@ -6,9 +6,12 @@ import bcrypt from "bcryptjs";
 // Local/sandbox seed. Passwords are random and written to .seed-credentials.txt (gitignored), never printed.
 const db = new PrismaClient();
 
-const users: { email: string; role: Role; supportGroup?: string }[] = [
+const users: { email: string; role: Role; supportGroup?: string; agentName?: string }[] = [
   { email: "admin@example.test", role: "ADMIN" },
   { email: "experience@example.test", role: "EXPERIENCE_TEAM" },
+  { email: "sdm@example.test", role: "SERVICE_DELIVERY_MANAGER" },
+  // Matches the mock Helix agent name, so the agent sees mock surveys.
+  { email: "agent@example.test", role: "SUPPORT_AGENT", agentName: "Test Agent" },
   { email: "servicedesk@example.test", role: "SUPPORT_GROUP", supportGroup: "Service Desk" },
   { email: "network@example.test", role: "SUPPORT_GROUP", supportGroup: "Network" },
   { email: "cio@example.test", role: "CIO" },
@@ -21,7 +24,7 @@ async function main() {
     const passwordHash = await bcrypt.hash(password, 10);
     await db.user.upsert({
       where: { email: u.email },
-      update: { passwordHash, role: u.role, supportGroup: u.supportGroup ?? null, active: true },
+      update: { passwordHash, role: u.role, supportGroup: u.supportGroup ?? null, agentName: u.agentName ?? null, active: true },
       create: { ...u, passwordHash },
     });
     lines.push(`${u.email}\t${password}`);

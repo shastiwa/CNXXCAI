@@ -1,20 +1,35 @@
 import type { Prisma, User } from "@prisma/client";
 import { db } from "@/lib/db";
+import { SCOPE_BY_ROLE } from "@/lib/roles";
 
-/** SUPPORT_GROUP users only ever see their own group's numbers. */
-export function buildScopeFilters(user: Pick<User, "role" | "supportGroup">) {
-  if (user.role === "SUPPORT_GROUP") {
-    const group = user.supportGroup ?? "__none__";
-    return {
-      response: { invite: { supportGroup: group } } satisfies Prisma.SurveyResponseWhereInput,
-      recoveryCase: { response: { invite: { supportGroup: group } } } satisfies Prisma.RecoveryCaseWhereInput,
-      invite: { supportGroup: group } satisfies Prisma.SurveyInviteWhereInput,
-    };
-  }
-  return { response: {}, recoveryCase: {}, invite: {} };
+export type Viewer = Pick<User, "role" | "supportGroup"> & { agentName?: string | null };
+
+function scoped(invite: Prisma.SurveyInviteWhereInput) {
+  return {
+    response: { invite } satisfies Prisma.SurveyResponseWhereInput,
+    recoveryCase: { response: { invite } } satisfies Prisma.RecoveryCaseWhereInput,
+    invite,
+  };
 }
 
-export async function getDashboardMetrics(user: Pick<User, "role" | "supportGroup">) {
+/**
+ * Group managers see only their group; agents see only surveys where Helix named them as the agent.
+ * Fails closed: a role with no rule, or a group or agent user with no group or name, sees nothing.
+ */
+export function buildScopeFilters(user: Viewer) {
+  switch (SCOPE_BY_ROLE[user.role]) {
+    case "all":
+      return { response: {}, recoveryCase: {}, invite: {} };
+    case "group":
+      return scoped({ supportGroup: user.supportGroup || "__none__" });
+    case "agent":
+      return scoped({ assignedAgent: user.agentName || "__none__" });
+    default:
+      return scoped({ id: "__none__" });
+  }
+}
+
+export async function getDashboardMetrics(user: Viewer) {
   const f = buildScopeFilters(user);
   const [invites, satisfied, unsatisfied, created, failed, pending, loss] = await Promise.all([
     db.surveyInvite.count({ where: f.invite }),

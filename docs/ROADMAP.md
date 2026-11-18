@@ -29,6 +29,22 @@
 - [ ] Send survey emails (currently links are only returned to Helix)
 - [ ] Retention and export rules for requester email and comments (PII)
 
+## Phase 1a: Survey experience (v0.3.0)
+- [x] 7 configurable dissatisfaction reasons
+- [x] Optional comments and positive feedback
+- [x] Attachments with admin-set limits and content checks
+- [x] Request details on the survey page (needs real Helix field names)
+- [x] Mobile-friendly survey page, thank-you page, configurable expiry
+- [ ] Verify detail field names against real Helix
+- [ ] Virus scanning for attachments
+- [ ] Phase 1b: dashboard KPIs, filters, group and service analytics, Excel export
+
+## Roles (v0.4.0)
+- [x] Service Delivery Manager and Support Agent roles, central role rules, fail-closed scoping
+- [x] Admin can change an existing user's role, group, agent name and active flag
+- [ ] Create users and reset passwords from the Admin page (needs a password-delivery decision)
+- [ ] Decide Service Delivery Manager access to follow-ups (with the Phase 2 Follow-up module)
+
 ## Phase 2: Operate
 - [ ] Deployment, monitoring, backups (see OPERATIONS.md)
 - [ ] Add a CIO-specific `/cio` view (architecture mentions it; today CIO uses the dashboard)

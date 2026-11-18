@@ -33,5 +33,29 @@ Helix (not this app) emails the survey link. The link carries the incident numbe
 ## ADR-012: The link key is the Incident Number (user's decision)
 `HELIX_FIELDS.accessKey` is `Incident Number`, so the link is `?incident=INC…&key=INC…`. Why: no separate key field exists in Helix. Risk: incident numbers are sequential and guessable, so anyone who knows a resolved incident number can open its survey and answer for the requester. Limits that remain: resolved-only, requester must exist, one survey per incident. Better later: a random key field in Helix, or SSO.
 
+## ADR-013: Dissatisfaction reasons live in the database
+`SurveyReason` holds the list (seven defaults, seeded on first use). Submit accepts only an active reason; "Other" is just another entry an admin may remove. Removed reasons are switched off, not deleted, so old responses keep their wording. One reason per answer for now.
+
+## ADR-014: Attachments on disk, validated by content
+Files go to `UPLOAD_DIR` (outside the web root) under random names; the database keeps the display name, type, size and SHA-256. The file type comes from the extension the admin allowed, and the first bytes must match it. The browser's content type is ignored. Downloads are always `attachment` with `nosniff`. Order: validate, write files, save to database, delete files if the save fails. Only Unsatisfied answers may carry files. Not built: virus scanning, so the file list is kept short and plain (no scripts, archives or programs). PDF and Office files can still carry hidden content: add scanning before real use.
+
+## ADR-015: Request details are a separate, best-effort Helix call
+The verified lookup (5 fields) is unchanged. Summary, service, type, category, priority, agent and resolved date are read in a second call that never throws; if it fails the survey still opens without details. Why: those field names are unverified, and a wrong name in the main query could have broken the one flow proven against real Helix. Names are set by `HELIX_DETAIL_FIELDS`.
+
+## ADR-016: Six roles, rules in one file, scoping fails closed
+Your suggested roles map onto the enum like this: System Administrator = `ADMIN`, Service Delivery Manager = `SERVICE_DELIVERY_MANAGER` (new), Support Group Manager = `SUPPORT_GROUP`, Support Agent = `SUPPORT_AGENT` (new), Read-only Management = `CIO`; `EXPERIENCE_TEAM` stays. Existing enum names were kept so no data changes; only labels differ (`ROLE_LABELS`).
+
+| Role | Dashboard and responses | Requester email | Open files | Cases | Admin |
+|---|---|---|---|---|---|
+| System Administrator | all | yes | yes | yes | yes |
+| Experience Team | all | yes | yes | yes | no |
+| Service Delivery Manager | all | no | yes | no | no |
+| Support Group Manager | own group | no | own group | no | no |
+| Support Agent | surveys naming them | no | no | no | no |
+| Read-only Management | all | no | no | no | no |
+
+Why SDM has no cases: ADR-005 keeps cases with the central team; follow-up access for managers is decided with the Phase 2 Follow-up module. Why agents get no files: screenshots can hold personal data. Both are one-line changes in `src/lib/roles.ts`.
+`buildScopeFilters` now fails closed: only roles explicitly marked "all" see everything. Agents are matched by exact Helix agent text (`User.agentName`); a wrong spelling shows nothing rather than too much.
+
 ## ADR-008: Test DB is a deleted-and-recreated file
 `prisma db push --force-reset` is refused when run by an AI agent and is destructive. Tests delete `prisma/test.db` and run a plain `db push` instead.

@@ -1,7 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { getActiveReasons } from "@/services/reasons";
+import { getSettings } from "@/services/settings";
 import Nav from "../Nav";
+import SettingsForm from "./SettingsForm";
+import UsersTable from "./UsersTable";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +14,9 @@ export default async function Admin() {
   if (!user) redirect("/login?next=/admin");
   if (user.role !== "ADMIN") notFound();
 
+  const [settings, reasons] = await Promise.all([getSettings(), getActiveReasons()]);
   const [users, logs] = await Promise.all([
-    db.user.findMany({ orderBy: { email: "asc" }, select: { id: true, email: true, role: true, supportGroup: true, active: true } }),
+    db.user.findMany({ orderBy: { email: "asc" }, select: { id: true, email: true, role: true, supportGroup: true, agentName: true, active: true } }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 50, include: { actor: { select: { email: true } } } }),
   ]);
 
@@ -20,17 +25,10 @@ export default async function Admin() {
       <Nav email={user.email} role={user.role} />
       <main>
         <h1>Admin</h1>
+        <h2>Survey settings</h2>
+        <SettingsForm initial={settings} reasons={reasons} />
         <h2>Users</h2>
-        <div className="card" style={{ overflowX: "auto" }}>
-          <table>
-            <thead><tr><th>Email</th><th>Role</th><th>Group</th><th>Active</th></tr></thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}><td>{u.email}</td><td>{u.role}</td><td>{u.supportGroup ?? "-"}</td><td>{u.active ? "yes" : "no"}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <UsersTable users={users} selfId={user.id} />
         <h2>Recent audit log</h2>
         <div className="card" style={{ overflowX: "auto" }}>
           <table>

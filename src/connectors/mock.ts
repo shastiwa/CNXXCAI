@@ -20,6 +20,17 @@ export const mockHelix: HelixConnector = {
       accessKey: `key-${incidentId}`,
     };
   },
+  async getIncidentDetails() {
+    return {
+      summary: "Cannot connect to the VPN from home",
+      serviceName: "Network Access",
+      requestType: "Incident",
+      category: "Network",
+      priority: "Medium",
+      assignedAgent: "Test Agent",
+      resolvedAt: new Date(Date.now() - 86400_000),
+    };
+  },
 };
 
 let counter = 1000;

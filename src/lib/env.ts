@@ -16,6 +16,11 @@ const schema = z.object({
   HELIX_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
   // Comma-separated Helix status values that count as "resolved".
   HELIX_RESOLVED_STATUSES: z.string().default("Resolved,Closed"),
+  // Optional JSON that renames the Helix fields used for request details, for example
+  // {"summary":"Description","serviceName":"Service"}. Unset keys keep the defaults in live.ts.
+  HELIX_DETAIL_FIELDS: z.string().optional(),
+  // Where survey attachments are stored (outside the web root). Never serve this folder directly.
+  UPLOAD_DIR: z.string().min(1).default("uploads"),
 });
 
 let cached: z.infer<typeof schema> | undefined;

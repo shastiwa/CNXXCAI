@@ -9,6 +9,17 @@ export interface HelixIncident {
   accessKey: string | null;
 }
 
+/** Extra request information shown on the survey page and used for analytics. Every field is optional. */
+export interface HelixIncidentDetails {
+  summary: string | null;
+  serviceName: string | null;
+  requestType: string | null;
+  category: string | null;
+  priority: string | null;
+  assignedAgent: string | null;
+  resolvedAt: Date | null;
+}
+
 export interface CreateCaseInput {
   incidentId: string;
   summary: string;
@@ -23,6 +34,11 @@ export interface CreateCaseResult {
 export interface HelixConnector {
   /** Read-only lookup. Returns null when the incident does not exist. Throws when Helix is unreachable. */
   getIncident(incidentId: string): Promise<HelixIncident | null>;
+  /**
+   * Best effort and read-only. Returns null when the details cannot be read. Never throws, because
+   * the survey must still open when these (not yet verified) fields are missing in Helix.
+   */
+  getIncidentDetails?(incidentId: string): Promise<HelixIncidentDetails | null>;
 }
 
 export interface BwfConnector {

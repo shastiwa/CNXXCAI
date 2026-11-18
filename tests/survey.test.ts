@@ -25,7 +25,7 @@ describe("submitResponse", () => {
 
   it("UNSATISFIED creates a case and pushes it to BWF", async () => {
     const i = await invite("INC2");
-    await submitResponse({ token: i.token, satisfaction: "UNSATISFIED", dissatisfactionReason: "Took too long" });
+    await submitResponse({ token: i.token, satisfaction: "UNSATISFIED", dissatisfactionReason: "Resolution took too long" });
     const rc = await db.recoveryCase.findFirstOrThrow();
     expect(rc.status).toBe("CREATED");
     expect(rc.bwfCaseNumber).toMatch(/^EXP-/);

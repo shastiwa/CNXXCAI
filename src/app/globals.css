@@ -22,3 +22,11 @@ table { width:100%; border-collapse:collapse; font-size:14px; }
 th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
 .err { color:var(--bad); }
 .row { display:flex; gap:12px; flex-wrap:wrap; }
+.survey { max-width: 560px; }
+.details { margin: 0 0 16px; }
+.details div { display:flex; gap:12px; padding:4px 0; }
+.details dt { flex:0 0 110px; }
+.details dd { margin:0; overflow-wrap:anywhere; }
+.choice button { flex:1 1 140px; min-height:48px; }
+input[type=file] { padding:8px; }
+@media (max-width: 480px) { main { padding: 16px 12px; } .details div { flex-direction:column; gap:0; } }
